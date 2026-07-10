@@ -1,58 +1,77 @@
-﻿# book-nook
+# Book Nook
 
-A Book Store App
+Book Nook is a clean, modern React Native bookstore app built with Expo Router. It focuses on the assessment requirements: polished bookstore screens, explicit book-detail lifecycle handling, Zustand cart state, a subtle Reanimated add-to-cart animation, mock API data, and meaningful tests.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Features
 
-## Get started
+- Home catalog with search, featured books, categories, and paginated FlashList rendering.
+- Book details screen that fetches a selected book with `useEffect`, including loading, error, cleanup, and success states.
+- Cart powered by Zustand with add, remove, increase, decrease, item totals, and automatic total updates.
+- Checkout screen with order summary, shipping, payment preview, and success navigation.
+- Success screen with confirmation state and continue-shopping action.
+- Subtle book-cover animation toward the cart action using React Native Reanimated.
+- Mock API with 24 realistic books, simulated latency, pagination, search, and simulated failures.
 
-1. Install dependencies
+## Technical Decisions
 
-   ```bash
-   npm install
-   ```
+- **Expo SDK 57**: The project follows the versioned Expo v57 setup already present in the repository.
+- **Expo Router**: File-based routes keep navigation simple: home, details, cart, checkout, and success.
+- **NativeWind**: Utility classes provide concise, consistent styling around the white/orange minimalist design system.
+- **Zustand**: Cart behavior is small, synchronous, and shared across screens, so a lightweight store is the clearest fit.
+- **React Query**: The home catalog uses `useInfiniteQuery` for paginated catalog fetching and cache management.
+- **useEffect for Details**: The details screen intentionally uses `useEffect` to demonstrate request lifecycle management.
+- **FlashList**: The catalog uses FlashList for efficient rendering as the data set grows.
+- **expo-image**: Covers use memory/disk caching and transitions for a smoother book-browsing feel.
 
-2. Start the app
+## Project Structure
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+  app/             Expo Router screens
+  components/      Reusable UI components
+  features/        Feature-specific modules
+  hooks/           Shared hooks
+  services/        Mock API and data
+  store/           Zustand stores
+  types/           Shared TypeScript types
+  utils/           Formatting helpers
+  __tests__/       Jest and React Native Testing Library tests
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Setup
 
-### Other setup steps
+```bash
+npm install
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Expo SDK 57 / React Native 0.86 expects Node `20.19.4` or newer. This machine currently reports Node `20.19.0`, which may produce engine warnings.
 
-## Learn more
+## Run the App
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm start
+npm run ios
+npm run android
+npm run web
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Run Tests
 
-## Join the community
+```bash
+npm test
+```
 
-Join our community of developers creating universal apps.
+The test suite covers:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Price formatting component.
+- Cart store add/remove/quantity/total behavior.
+- Mock book API success, pagination, and failure states.
+- Checkout summary total calculation and rendering.
+
+## Performance Notes
+
+- FlashList renders the home catalog efficiently with `numColumns` and lazy page loading.
+- Book card rendering is memoized with `React.memo`.
+- Search input is debounced before triggering catalog queries.
+- Images use `expo-image` caching and transitions.
+- Business logic is separated from UI to keep render paths small and testable.
