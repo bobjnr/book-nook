@@ -1,16 +1,24 @@
 import { router } from 'expo-router';
-import { Check } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 import { Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Screen } from '@/components/Screen';
 
+const successAnimation = require('../../assets/Success green.json');
+
 export default function SuccessScreen() {
   return (
     <Screen>
       <View className="flex-1 items-center justify-center gap-8">
-        <View className="h-28 w-28 items-center justify-center rounded-full bg-green-500 shadow-lg">
-          <Check color="#FFFFFF" size={64} strokeWidth={3} />
+        <View className="h-40 w-40 items-center justify-center">
+          <LottieView
+            source={successAnimation}
+            autoPlay
+            loop={false}
+            style={{ width: 160, height: 160 }}
+            resizeMode="contain"
+          />
         </View>
 
         <View className="items-center gap-3">

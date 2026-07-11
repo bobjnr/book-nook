@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/immutability */
 import { Image } from 'expo-image';
 import { Link, router, useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { ArrowLeft, ShoppingBag } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -9,8 +10,12 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { BookCover } from '@/components/book/BookCover';
 import { Rating } from '@/components/book/Rating';
@@ -46,8 +51,10 @@ export default function BookDetailsScreen() {
   const rootRef = useRef<View>(null);
   const coverRef = useRef<View>(null);
   const cartIconRef = useRef<View>(null);
+  const isFlyingRef = useRef(false);
   const addBook = useCartStore((state) => state.addBook);
   const itemCount = useCartStore((state) => state.getItemCount());
+  const [toastQuantity, setToastQuantity] = useState(1);
   const flyingOpacity = useSharedValue(0);
   const flyingProgress = useSharedValue(0);
   const flyingLeft = useSharedValue(0);
@@ -58,6 +65,10 @@ export default function BookDetailsScreen() {
   const flyingControlY = useSharedValue(0);
   const flyingEndX = useSharedValue(0);
   const flyingEndY = useSharedValue(0);
+  const cartBumpScale = useSharedValue(1);
+  const badgeBumpScale = useSharedValue(1);
+  const toastOpacity = useSharedValue(0);
+  const toastTranslateY = useSharedValue(0);
 
   useEffect(() => {
     let isActive = true;
@@ -103,8 +114,10 @@ export default function BookDetailsScreen() {
       2 * inverse * progress * flyingControlX.value + progress * progress * flyingEndX.value;
     const translateY =
       2 * inverse * progress * flyingControlY.value + progress * progress * flyingEndY.value;
-    const scale = interpolate(progress, [0, 0.78, 1], [1, 0.34, 0.16]);
-    const rotate = interpolate(progress, [0, 1], [0, 7]);
+    // Shrinks quickly on lift-off, then settles into a small parcel for the rest
+    // of the arc, with a gentle flutter of rotation instead of a single twist.
+    const scale = interpolate(progress, [0, 0.2, 0.62, 1], [1, 0.62, 0.32, 0.15]);
+    const rotate = interpolate(progress, [0, 0.3, 0.62, 1], [0, -8, 5, 12]);
 
     return {
       left: flyingLeft.value,
@@ -121,12 +134,33 @@ export default function BookDetailsScreen() {
     };
   });
 
-  function startFlyingCoverAnimation() {
+  const cartIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cartBumpScale.value }],
+  }));
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeBumpScale.value }],
+  }));
+
+  const toastStyle = useAnimatedStyle(() => ({
+    opacity: toastOpacity.value,
+    transform: [{ translateY: toastTranslateY.value }],
+  }));
+
+  function handleCartLanding(bookToAdd: Book, quantityToAdd: number) {
+    for (let index = 0; index < quantityToAdd; index += 1) {
+      addBook(bookToAdd);
+    }
+    isFlyingRef.current = false;
+  }
+
+  function startFlyingCoverAnimation(onLanded: () => void) {
     const rootNode = rootRef.current;
     const coverNode = coverRef.current;
     const cartNode = cartIconRef.current;
 
     if (!rootNode || !coverNode || !cartNode) {
+      isFlyingRef.current = false;
       return;
     }
 
@@ -147,24 +181,40 @@ export default function BookDetailsScreen() {
           flyingWidth.value = coverWidth;
           flyingHeight.value = coverHeight;
           flyingControlX.value = endX * 0.35;
-          flyingControlY.value = Math.min(endY, 0) - 110;
+          flyingControlY.value = Math.min(endY, 0) - 130;
           flyingEndX.value = endX;
           flyingEndY.value = endY;
           flyingProgress.value = 0;
           flyingOpacity.value = 1;
-          flyingProgress.value = withTiming(
-            1,
-            {
-              duration: 780,
-              easing: Easing.bezier(0.2, 0.82, 0.2, 1),
-            },
-            (finished) => {
+
+          // Two-stage timing rather than one flat curve: a quick, energetic
+          // launch away from the cover, then a shorter, decelerating
+          // approach into the cart, similar to how a thrown object behaves.
+          flyingProgress.value = withSequence(
+            withTiming(0.62, { duration: 430, easing: Easing.out(Easing.cubic) }),
+            withTiming(1, { duration: 300, easing: Easing.in(Easing.quad) }, (finished) => {
               if (finished) {
-                flyingOpacity.value = withTiming(0, { duration: 120 }, () => {
-                  flyingProgress.value = 0;
+                scheduleOnRN(onLanded);
+                flyingOpacity.value = withTiming(0, { duration: 160 });
+                cartBumpScale.value = withSequence(
+                  withSpring(1.32, { damping: 5, stiffness: 260 }),
+                  withSpring(1, { damping: 8, stiffness: 220 }),
+                );
+                badgeBumpScale.value = withSequence(
+                  withSpring(1.5, { damping: 5, stiffness: 260 }),
+                  withSpring(1, { damping: 7, stiffness: 200 }),
+                );
+                toastOpacity.value = withSequence(
+                  withTiming(1, { duration: 120 }),
+                  withDelay(360, withTiming(0, { duration: 220 })),
+                );
+                toastTranslateY.value = 0;
+                toastTranslateY.value = withTiming(-26, {
+                  duration: 700,
+                  easing: Easing.out(Easing.quad),
                 });
               }
-            },
+            }),
           );
         });
       });
@@ -172,15 +222,21 @@ export default function BookDetailsScreen() {
   }
 
   function handleAddToCart() {
-    if (!book) {
+    if (!book || isFlyingRef.current) {
       return;
     }
 
-    startFlyingCoverAnimation();
+    isFlyingRef.current = true;
+    setToastQuantity(quantity);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
 
-    for (let index = 0; index < quantity; index += 1) {
-      addBook(book);
-    }
+    const bookToAdd = book;
+    const quantityToAdd = quantity;
+
+    startFlyingCoverAnimation(() => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+      handleCartLanding(bookToAdd, quantityToAdd);
+    });
   }
 
   return (
@@ -198,18 +254,32 @@ export default function BookDetailsScreen() {
           <View className="flex-row items-center gap-3">
             <Link href="/cart" asChild>
               <Pressable>
-                <View
+                <Animated.View
                   ref={cartIconRef}
                   collapsable={false}
                   className="h-11 w-11 items-center justify-center rounded-2xl bg-orange-50"
+                  style={cartIconStyle}
                 >
                   <ShoppingBag color="#F97316" size={20} />
                   {itemCount > 0 ? (
-                    <View className="absolute -right-1 -top-1 min-w-5 items-center rounded-full bg-orange-500 px-1">
+                    <Animated.View
+                      style={badgeStyle}
+                      className="absolute -right-1 -top-1 min-w-5 items-center rounded-full bg-orange-500 px-1"
+                    >
                       <Text className="text-[10px] font-extrabold text-white">{itemCount}</Text>
-                    </View>
+                    </Animated.View>
                   ) : null}
-                </View>
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[{ position: 'absolute', top: -26, alignSelf: 'center' }, toastStyle]}
+                  >
+                    <View className="rounded-full bg-slate-950 px-2 py-0.5">
+                      <Text className="text-[10px] font-extrabold text-white">
+                        {`+${toastQuantity}`}
+                      </Text>
+                    </View>
+                  </Animated.View>
+                </Animated.View>
               </Pressable>
             </Link>
           </View>
@@ -290,13 +360,18 @@ export default function BookDetailsScreen() {
                 {
                   position: 'absolute',
                   zIndex: 20,
-                  borderRadius: 20,
-                  overflow: 'hidden',
+                  shadowColor: '#0F172A',
+                  shadowOffset: { width: 0, height: 10 },
+                  shadowOpacity: 0.28,
+                  shadowRadius: 16,
+                  elevation: 12,
                 },
                 flyingStyle,
               ]}
             >
-              <Image source={{ uri: book.cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              <View style={{ width: '100%', height: '100%', borderRadius: 20, overflow: 'hidden' }}>
+                <Image source={{ uri: book.cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              </View>
             </Animated.View>
 
             <View className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 border-t border-slate-100 bg-white pb-5 pt-4">
@@ -317,5 +392,3 @@ export default function BookDetailsScreen() {
     </Screen>
   );
 }
-
-

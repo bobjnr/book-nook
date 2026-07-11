@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import CartScreen from '@/app/cart';
 import { books } from '@/services/books';
@@ -9,7 +9,7 @@ describe('CartScreen', () => {
     useCartStore.setState({ items: [] });
   });
 
-  it('updates quantities, totals, and removes items from the rendered cart', async () => {
+  it('updates quantities, totals, and removes items from the rendered cart', () => {
     useCartStore.getState().addBook(books[0]);
 
     render(<CartScreen />);
@@ -30,8 +30,7 @@ describe('CartScreen', () => {
 
     fireEvent.press(screen.getByLabelText('Remove The Alchemist'));
 
-    await waitFor(() => {
-      expect(screen.getByText('Your cart is empty')).toBeTruthy();
-    });
+    expect(screen.getByText('Your cart is empty')).toBeTruthy();
   });
 });
+

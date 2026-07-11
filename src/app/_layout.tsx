@@ -21,16 +21,14 @@ export default function RootLayout() {
     SpaceMono_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FFFFFF' } }} />
+          <StatusBar style="dark" hidden={false} />
+          {fontsLoaded ? (
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FFFFFF' } }} />
+          ) : null}
         </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

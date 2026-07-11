@@ -29,3 +29,7 @@ jest.mock('expo-image', () => {
 
   return { Image };
 });
+jest.mock('lottie-react-native', () => ({
+  __esModule: true,
+  default: () => null,
+}));
