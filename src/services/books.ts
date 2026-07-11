@@ -4,6 +4,7 @@ type BookQuery = {
   page?: number;
   limit?: number;
   search?: string;
+  category?: string;
   shouldFail?: boolean;
 };
 
@@ -312,18 +313,22 @@ function maybeFail(shouldFail?: boolean) {
   }
 }
 
-export async function fetchBooks({ page = 1, limit = 10, search = '', shouldFail }: BookQuery = {}) {
+export async function fetchBooks({ page = 1, limit = 10, search = '', category, shouldFail }: BookQuery = {}) {
   await wait();
   maybeFail(shouldFail);
 
   const normalizedSearch = search.trim().toLowerCase();
+  const normalizedCategory = category?.trim().toLowerCase();
+  const categoryBooks = normalizedCategory
+    ? books.filter((book) => book.category.toLowerCase() === normalizedCategory)
+    : books;
   const filteredBooks = normalizedSearch
-    ? books.filter((book) =>
+    ? categoryBooks.filter((book) =>
         [book.title, book.author, book.category].some((value) =>
           value.toLowerCase().includes(normalizedSearch),
         ),
       )
-    : books;
+    : categoryBooks;
 
   const start = (page - 1) * limit;
   const paginatedBooks = filteredBooks.slice(start, start + limit);
@@ -348,3 +353,5 @@ export async function fetchBookById(id: string, options?: { shouldFail?: boolean
 
   return book;
 }
+
+

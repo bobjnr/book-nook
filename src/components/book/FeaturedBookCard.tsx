@@ -7,26 +7,22 @@ import { Price } from '@/components/Price';
 import { typography } from '@/constants/typography';
 import type { Book } from '@/types/book';
 
-type BookCardProps = {
+type FeaturedBookCardProps = {
   book: Book;
   onPress: (book: Book) => void;
-  width?: number;
 };
 
-function BookCardComponent({ book, onPress, width = 150 }: BookCardProps) {
-  const coverHeight = Math.round(width * 1.47);
-
+function FeaturedBookCardComponent({ book, onPress }: FeaturedBookCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Open ${book.title}`}
       onPress={() => onPress(book)}
-      className="mb-8 rounded-3xl bg-white"
-      style={{ width }}
+      className="w-40"
     >
-      <BookCover uri={book.cover} width={width} height={coverHeight} rounded={18} />
+      <BookCover uri={book.cover} width={144} height={212} rounded={18} />
       <View className="mt-3 gap-1">
-        <Text className="text-base leading-5 text-slate-950" numberOfLines={2} style={typography.title}>
+        <Text className="text-[15px] leading-5 text-slate-950" numberOfLines={2} style={typography.title}>
           {book.title}
         </Text>
         <Text className="text-[11px] text-slate-500" numberOfLines={1} style={typography.label}>
@@ -41,4 +37,4 @@ function BookCardComponent({ book, onPress, width = 150 }: BookCardProps) {
   );
 }
 
-export const BookCard = memo(BookCardComponent);
+export const FeaturedBookCard = memo(FeaturedBookCardComponent);

@@ -1,6 +1,15 @@
 import { jest } from '@jest/globals';
 
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+jest.mock('lucide-react-native', () =>
+  new Proxy(
+    { __esModule: true },
+    {
+      get: (target, property) =>
+        property in target ? target[property as keyof typeof target] : () => null,
+    },
+  ),
+);
 
 jest.mock('expo-router', () => ({
   Link: ({ children }: { children: unknown }) => children,
@@ -12,6 +21,7 @@ jest.mock('expo-router', () => ({
     replace: jest.fn(),
   },
   useLocalSearchParams: () => ({ id: 'alchemist' }),
+  usePathname: () => '/cart',
 }));
 
 jest.mock('expo-image', () => {

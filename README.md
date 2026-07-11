@@ -65,6 +65,7 @@ The test suite covers:
 
 - Price formatting component.
 - Cart store add/remove/quantity/total behavior.
+- Rendered Cart screen quantity controls, totals, and remove action.
 - Mock book API success, pagination, and failure states.
 - Checkout summary total calculation and rendering.
 

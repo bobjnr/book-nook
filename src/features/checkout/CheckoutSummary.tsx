@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { Price } from '@/components/Price';
+import { typography } from '@/constants/typography';
 import type { CartItem } from '@/types/book';
 import { formatCurrency } from '@/utils/currency';
 
@@ -19,35 +19,49 @@ export function CheckoutSummary({ items, shipping = 3.99 }: CheckoutSummaryProps
 
   return (
     <View className="gap-4">
-      <Text className="text-xl font-extrabold text-slate-950">Order Summary</Text>
+      <Text className="text-xl text-slate-950" style={typography.title}>
+        Order Summary
+      </Text>
       <View className="gap-3">
         {items.map((item) => (
           <View key={item.book.id} className="flex-row items-center justify-between">
             <View className="flex-1 pr-4">
-              <Text className="font-extrabold text-slate-950" numberOfLines={1}>
+              <Text className="text-slate-950" numberOfLines={1} style={typography.title}>
                 {item.book.title}
               </Text>
-              <Text className="text-xs font-semibold text-slate-500">
+              <Text className="text-xs text-slate-500" style={typography.label}>
                 {item.book.author}  x{item.quantity}
               </Text>
             </View>
-            <Price value={item.book.price * item.quantity} size="sm" />
+            <Text className="text-slate-950" style={typography.labelBold}>
+              {formatCurrency(item.book.price * item.quantity)}
+            </Text>
           </View>
         ))}
       </View>
       <View className="h-px bg-slate-100" />
       <View className="gap-3">
         <View className="flex-row justify-between">
-          <Text className="font-semibold text-slate-500">Subtotal</Text>
-          <Text className="font-bold text-slate-950">{formatCurrency(subtotal)}</Text>
+          <Text className="text-slate-500" style={typography.label}>
+            Subtotal
+          </Text>
+          <Text className="text-slate-950" style={typography.labelBold}>
+            {formatCurrency(subtotal)}
+          </Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="font-semibold text-slate-500">Shipping</Text>
-          <Text className="font-bold text-slate-950">{formatCurrency(shipping)}</Text>
+          <Text className="text-slate-500" style={typography.label}>
+            Shipping
+          </Text>
+          <Text className="text-slate-950" style={typography.labelBold}>
+            {formatCurrency(shipping)}
+          </Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-lg font-extrabold text-slate-950">Total</Text>
-          <Text testID="checkout-total" className="text-lg font-extrabold text-slate-950">
+          <Text className="text-lg text-slate-950" style={typography.title}>
+            Total
+          </Text>
+          <Text testID="checkout-total" className="text-lg text-slate-950" style={typography.labelBold}>
             {formatCurrency(total)}
           </Text>
         </View>

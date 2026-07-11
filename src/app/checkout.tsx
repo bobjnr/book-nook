@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Screen } from '@/components/Screen';
+import { typography } from '@/constants/typography';
 import { CheckoutSummary } from '@/features/checkout/CheckoutSummary';
 import { useCartStore } from '@/store/cart-store';
 
@@ -27,14 +28,18 @@ export default function CheckoutScreen() {
         >
           <ArrowLeft color="#0F172A" size={21} />
         </Pressable>
-        <Text className="text-xl font-black text-slate-950">Checkout</Text>
+        <Text className="text-xl text-slate-950" style={typography.titleBlack}>
+          Checkout
+        </Text>
         <View className="w-11" />
       </View>
 
       {items.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-4">
-          <Text className="text-center text-2xl font-black text-slate-950">No books to checkout</Text>
-          <PrimaryButton onPress={() => router.replace('/')}>Continue Shopping</PrimaryButton>
+          <Text className="text-center text-2xl text-slate-950" style={typography.titleBlack}>
+            No books to checkout
+          </Text>
+          <PrimaryButton onPress={() => router.replace('/')}>CONTINUE SHOPPING</PrimaryButton>
         </View>
       ) : (
         <View className="flex-1">
@@ -43,9 +48,13 @@ export default function CheckoutScreen() {
               {['Shipping', 'Payment', 'Review'].map((step, index) => (
                 <View key={step} className="items-center gap-2">
                   <View className="h-8 w-8 items-center justify-center rounded-full bg-orange-500">
-                    <Text className="text-xs font-extrabold text-white">{index + 1}</Text>
+                    <Text className="text-xs text-white" style={typography.labelBold}>
+                      {index + 1}
+                    </Text>
                   </View>
-                  <Text className="text-xs font-bold text-slate-600">{step}</Text>
+                  <Text className="text-xs text-slate-600" style={typography.labelBold}>
+                    {step}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -54,21 +63,29 @@ export default function CheckoutScreen() {
               <View className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                 <View className="mb-3 flex-row items-center gap-2">
                   <MapPin color="#F97316" size={18} />
-                  <Text className="text-lg font-extrabold text-slate-950">Shipping Address</Text>
+                  <Text className="text-lg text-slate-950" style={typography.title}>
+                    Shipping Address
+                  </Text>
                 </View>
-                <Text className="font-bold text-slate-950">Ekene Bob</Text>
-                <Text className="mt-1 leading-6 text-slate-500">
-                  12 Palm Street, Uyo, Akwa Ibom State, Nigeria
+                <Text className="text-slate-950" style={typography.labelBold}>
+                  Ekene Bob
+                </Text>
+                <Text className="mt-1 leading-6 text-slate-500" style={typography.label}>
+                  27, Ojurongbe Street, Egbeda, Lagos State, Nigeria
                 </Text>
               </View>
 
               <View className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                 <View className="mb-3 flex-row items-center gap-2">
                   <CreditCard color="#F97316" size={18} />
-                  <Text className="text-lg font-extrabold text-slate-950">Payment Method</Text>
+                  <Text className="text-lg text-slate-950" style={typography.title}>
+                    Payment Method
+                  </Text>
                 </View>
                 <View className="flex-row items-center justify-between rounded-2xl bg-orange-50 p-4">
-                  <Text className="font-extrabold text-slate-950">Credit / Debit Card</Text>
+                  <Text className="text-slate-950" style={typography.labelBold}>
+                    Credit / Debit Card
+                  </Text>
                   <CheckCircle2 color="#16A34A" size={20} />
                 </View>
               </View>
@@ -81,7 +98,7 @@ export default function CheckoutScreen() {
 
           <View className="absolute bottom-0 left-0 right-0 border-t border-slate-100 bg-white pb-5 pt-4">
             <PrimaryButton testID="place-order-button" onPress={placeOrder}>
-              Place Order
+              PLACE ORDER
             </PrimaryButton>
           </View>
         </View>
