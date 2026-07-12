@@ -12,82 +12,13 @@ import { BottomNav } from "@/components/BottomNav";
 import { BookCover } from "@/components/book/BookCover";
 import { Screen } from "@/components/Screen";
 import { typography } from "@/constants/typography";
-import { books } from "@/services/books";
-import type { Book } from "@/types/book";
+import {
+  useOrderStore,
+  type Order,
+  type OrderItem,
+  type OrderStatus,
+} from "@/store/order-store";
 import { formatCurrency } from "@/utils/currency";
-
-type OrderStatus = "Processing" | "Shipped";
-
-type OrderItem = {
-  book: Book;
-  quantity: number;
-};
-
-type Order = {
-  id: string;
-  status: OrderStatus;
-  placedAt: string;
-  statusDate: string;
-  statusLabel: string;
-  note: string;
-  trackingCode?: string;
-  items: OrderItem[];
-};
-
-const orders: Order[] = [
-  {
-    id: "BN1234567890",
-    status: "Processing",
-    placedAt: "Jul 10, 2026",
-    statusDate: "Ships by Jul 15, 2026",
-    statusLabel: "Preparing order",
-    note: "We are packing these books and confirming dispatch with the store.",
-    items: [
-      { book: books[0], quantity: 1 },
-      { book: books[1], quantity: 2 },
-      { book: books[5], quantity: 1 },
-    ],
-  },
-  {
-    id: "BN1234567844",
-    status: "Processing",
-    placedAt: "Jul 11, 2026",
-    statusDate: "Ships by Jul 16, 2026",
-    statusLabel: "Payment confirmed",
-    note: "Your order is queued for fulfilment and will move to shipped after pickup.",
-    items: [
-      { book: books[13], quantity: 1 },
-      { book: books[21], quantity: 1 },
-    ],
-  },
-  {
-    id: "BN9876543210",
-    status: "Shipped",
-    placedAt: "Jun 28, 2026",
-    statusDate: "Shipped Jul 01, 2026",
-    statusLabel: "In transit",
-    note: "Your package has left the fulfilment center and is on the way.",
-    trackingCode: "BN-LAG-39821",
-    items: [
-      { book: books[2], quantity: 1 },
-      { book: books[3], quantity: 1 },
-      { book: books[4], quantity: 1 },
-    ],
-  },
-  {
-    id: "BN9876543188",
-    status: "Shipped",
-    placedAt: "Jun 20, 2026",
-    statusDate: "Shipped Jun 23, 2026",
-    statusLabel: "Out for delivery",
-    note: "The courier is scheduled to deliver these books soon.",
-    trackingCode: "BN-LAG-38674",
-    items: [
-      { book: books[7], quantity: 1 },
-      { book: books[9], quantity: 1 },
-    ],
-  },
-];
 
 function getOrderTotal(items: OrderItem[]) {
   return items.reduce(
@@ -98,10 +29,6 @@ function getOrderTotal(items: OrderItem[]) {
 
 function getOrderItemCount(items: OrderItem[]) {
   return items.reduce((total, item) => total + item.quantity, 0);
-}
-
-function getOrdersByStatus(status: OrderStatus) {
-  return orders.filter((order) => order.status === status);
 }
 
 function OrderTabs({
@@ -336,7 +263,9 @@ function OrderList({
             className="mt-2 text-center leading-6 text-slate-500"
             style={typography.label}
           >
-            Orders will appear here when they enter this stage.
+            {status === "Processing"
+              ? "Orders you place from checkout will appear here."
+              : "Your shipped books will appear here once they are on the way."}
           </Text>
         </View>
       )}
@@ -346,8 +275,11 @@ function OrderList({
 
 export default function OrdersScreen() {
   const [selectedTab, setSelectedTab] = useState<OrderStatus>("Processing");
-  const processingOrders = getOrdersByStatus("Processing");
-  const shippedOrders = getOrdersByStatus("Shipped");
+  const orders = useOrderStore((state) => state.orders);
+  const processingOrders = orders.filter(
+    (order) => order.status === "Processing",
+  );
+  const shippedOrders = orders.filter((order) => order.status === "Shipped");
   const visibleOrders =
     selectedTab === "Processing" ? processingOrders : shippedOrders;
 
@@ -361,7 +293,10 @@ export default function OrdersScreen() {
           >
             My Orders
           </Text>
-          <Text className="mt-2 text-sm text-slate-500" style={typography.label}>
+          <Text
+            className="mt-2 text-sm text-slate-500"
+            style={typography.label}
+          >
             Track every bookstore order by stage.
           </Text>
         </View>

@@ -16,6 +16,7 @@ import { Screen } from "@/components/Screen";
 import { typography } from "@/constants/typography";
 import { CheckoutSummary } from "@/features/checkout/CheckoutSummary";
 import { useCartStore } from "@/store/cart-store";
+import { useOrderStore } from "@/store/order-store";
 
 const paymentMethods = [
   {
@@ -49,10 +50,12 @@ type PaymentMethodId = (typeof paymentMethods)[number]["id"];
 export default function CheckoutScreen() {
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
+  const addOrderFromCart = useOrderStore((state) => state.addOrderFromCart);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethodId>("card");
 
   function placeOrder() {
+    addOrderFromCart(items);
     clearCart();
     router.replace("/success");
   }

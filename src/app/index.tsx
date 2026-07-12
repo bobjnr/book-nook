@@ -103,7 +103,8 @@ export default function HomeScreen() {
     (selectedCategory !== "All" || isSearchingBooks) && booksQuery.isLoading;
   const visibleBooks = isFilteringBooks ? [] : catalogBooks;
   const featuredBooks = featuredBooksQuery.data?.data ?? [];
-  const shouldShowFeaturedBooks = !isSearchInputActive && featuredBooks.length > 0;
+  const shouldShowFeaturedBooks =
+    !isSearchInputActive && featuredBooks.length > 0;
   const booksSectionTitle = isSearchInputActive
     ? "Search Results"
     : selectedCategory === "All"
@@ -118,6 +119,9 @@ export default function HomeScreen() {
     router.push("/help");
   }, []);
 
+  const openNotifications = useCallback(() => {
+    router.push("/notifications");
+  }, []);
   const renderBook = useCallback(
     ({ item, index }: { item: Book; index: number }) => (
       <View
@@ -170,7 +174,14 @@ export default function HomeScreen() {
               entering={FadeIn.duration(420).delay(260)}
               className="flex-row items-center gap-3"
             >
-              <Bell color="#0F172A" size={22} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Open notifications"
+                onPress={openNotifications}
+                className="h-11 w-11 items-center justify-center rounded-2xl bg-slate-50"
+              >
+                <Bell color="#0F172A" size={20} />
+              </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Open help center"
@@ -314,4 +325,3 @@ export default function HomeScreen() {
     </Screen>
   );
 }
-

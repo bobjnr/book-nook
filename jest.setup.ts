@@ -1,17 +1,26 @@
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
 
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
-jest.mock('lucide-react-native', () =>
-  new Proxy(
-    { __esModule: true },
-    {
-      get: (target, property) =>
-        property in target ? target[property as keyof typeof target] : () => null,
-    },
-  ),
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
+);
+jest.mock("react-native-reanimated", () =>
+  require("react-native-reanimated/mock"),
+);
+jest.mock(
+  "lucide-react-native",
+  () =>
+    new Proxy(
+      { __esModule: true },
+      {
+        get: (target, property) =>
+          property in target
+            ? target[property as keyof typeof target]
+            : () => null,
+      },
+    ),
 );
 
-jest.mock('expo-router', () => ({
+jest.mock("expo-router", () => ({
   Link: ({ children }: { children: unknown }) => children,
   Redirect: () => null,
   Stack: () => null,
@@ -20,16 +29,16 @@ jest.mock('expo-router', () => ({
     push: jest.fn(),
     replace: jest.fn(),
   },
-  useLocalSearchParams: () => ({ id: 'alchemist' }),
-  usePathname: () => '/cart',
+  useLocalSearchParams: () => ({ id: "alchemist" }),
+  usePathname: () => "/cart",
 }));
 
-jest.mock('expo-image', () => {
-  const { Image } = require('react-native');
+jest.mock("expo-image", () => {
+  const { Image } = require("react-native");
 
   return { Image };
 });
-jest.mock('lottie-react-native', () => ({
+jest.mock("lottie-react-native", () => ({
   __esModule: true,
   default: () => null,
 }));
