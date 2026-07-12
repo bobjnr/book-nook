@@ -1,4 +1,3 @@
-import { router } from "expo-router";
 import {
   CalendarDays,
   ChevronRight,
@@ -6,8 +5,8 @@ import {
   PackageSearch,
   Truck,
 } from "lucide-react-native";
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 
 import { BottomNav } from "@/components/BottomNav";
 import { BookCover } from "@/components/book/BookCover";
@@ -34,8 +33,6 @@ type Order = {
   trackingCode?: string;
   items: OrderItem[];
 };
-
-const orderTabs = ["Processing", "Shipped"] as const;
 
 const orders: Order[] = [
   {
@@ -103,6 +100,60 @@ function getOrderItemCount(items: OrderItem[]) {
   return items.reduce((total, item) => total + item.quantity, 0);
 }
 
+function getOrdersByStatus(status: OrderStatus) {
+  return orders.filter((order) => order.status === status);
+}
+
+function OrderTabs({
+  onSelect,
+  processingCount,
+  selectedTab,
+  shippedCount,
+}: {
+  onSelect: (status: OrderStatus) => void;
+  processingCount: number;
+  selectedTab: OrderStatus;
+  shippedCount: number;
+}) {
+  const tabs: { count: number; label: OrderStatus }[] = [
+    { label: "Processing", count: processingCount },
+    { label: "Shipped", count: shippedCount },
+  ];
+
+  return (
+    <View className="mb-5 flex-row rounded-2xl bg-slate-50 p-1">
+      {tabs.map((tab) => {
+        const isActive = tab.label === selectedTab;
+        const Icon = tab.label === "Processing" ? PackageSearch : PackageCheck;
+
+        return (
+          <View
+            key={tab.label}
+            accessible
+            accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={`${tab.label} orders`}
+            onTouchEnd={() => onSelect(tab.label)}
+            className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
+              isActive ? "bg-white shadow-sm" : ""
+            }`}
+          >
+            <Icon color={isActive ? "#F97316" : "#64748B"} size={16} />
+            <Text
+              className={`text-xs ${
+                isActive ? "text-slate-950" : "text-slate-500"
+              }`}
+              style={typography.labelBold}
+            >
+              {tab.label} ({tab.count})
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function OrderCard({ order }: { order: Order }) {
   const isShipped = order.status === "Shipped";
   const StatusIcon = isShipped ? Truck : PackageSearch;
@@ -127,10 +178,14 @@ function OrderCard({ order }: { order: Order }) {
           </View>
         </View>
         <View
-          className={`rounded-full px-3 py-1 ${isShipped ? "bg-emerald-50" : "bg-orange-50"}`}
+          className={`rounded-full px-3 py-1 ${
+            isShipped ? "bg-emerald-50" : "bg-orange-50"
+          }`}
         >
           <Text
-            className={`text-[10px] ${isShipped ? "text-emerald-600" : "text-orange-500"}`}
+            className={`text-[10px] ${
+              isShipped ? "text-emerald-600" : "text-orange-500"
+            }`}
             style={typography.labelBold}
           >
             {order.status}
@@ -169,13 +224,7 @@ function OrderCard({ order }: { order: Order }) {
 
       <View className="gap-3">
         {order.items.map((item) => (
-          <Pressable
-            key={item.book.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${item.book.title}`}
-            onPress={() => router.push(`/book/${item.book.id}`)}
-            className="flex-row items-center gap-3"
-          >
+          <View key={item.book.id} className="flex-row items-center gap-3">
             <BookCover
               uri={item.book.cover}
               width={54}
@@ -205,7 +254,7 @@ function OrderCard({ order }: { order: Order }) {
               </Text>
             </View>
             <ChevronRight color="#CBD5E1" size={18} />
-          </Pressable>
+          </View>
         ))}
       </View>
 
@@ -223,12 +272,84 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
+function OrderList({
+  orders: visibleOrders,
+  status,
+}: {
+  orders: Order[];
+  status: OrderStatus;
+}) {
+  const Icon = status === "Processing" ? PackageSearch : PackageCheck;
+  const description =
+    status === "Processing"
+      ? "Orders currently being packed for dispatch."
+      : "Orders that have left the fulfilment center.";
+
+  return (
+    <View className="gap-4">
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="flex-1 flex-row items-center gap-2">
+          <View
+            className={`h-9 w-9 items-center justify-center rounded-xl ${
+              status === "Processing" ? "bg-orange-50" : "bg-emerald-50"
+            }`}
+          >
+            <Icon
+              color={status === "Processing" ? "#F97316" : "#059669"}
+              size={18}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-lg text-slate-950" style={typography.title}>
+              {status}
+            </Text>
+            <Text
+              className="mt-0.5 text-xs text-slate-500"
+              style={typography.label}
+            >
+              {description}
+            </Text>
+          </View>
+        </View>
+        <View className="rounded-full bg-slate-100 px-3 py-1">
+          <Text className="text-xs text-slate-600" style={typography.labelBold}>
+            {visibleOrders.length}
+          </Text>
+        </View>
+      </View>
+
+      {visibleOrders.length > 0 ? (
+        <View className="gap-4">
+          {visibleOrders.map((order) => (
+            <OrderCard key={order.id} order={order} />
+          ))}
+        </View>
+      ) : (
+        <View className="items-center justify-center rounded-3xl bg-slate-50 p-8">
+          <Text
+            className="text-center text-xl text-slate-950"
+            style={typography.title}
+          >
+            No {status.toLowerCase()} orders
+          </Text>
+          <Text
+            className="mt-2 text-center leading-6 text-slate-500"
+            style={typography.label}
+          >
+            Orders will appear here when they enter this stage.
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function OrdersScreen() {
   const [selectedTab, setSelectedTab] = useState<OrderStatus>("Processing");
-  const visibleOrders = useMemo(
-    () => orders.filter((order) => order.status === selectedTab),
-    [selectedTab],
-  );
+  const processingOrders = getOrdersByStatus("Processing");
+  const shippedOrders = getOrdersByStatus("Shipped");
+  const visibleOrders =
+    selectedTab === "Processing" ? processingOrders : shippedOrders;
 
   return (
     <Screen>
@@ -240,70 +361,23 @@ export default function OrdersScreen() {
           >
             My Orders
           </Text>
+          <Text className="mt-2 text-sm text-slate-500" style={typography.label}>
+            Track every bookstore order by stage.
+          </Text>
         </View>
 
-        <View className="mb-5 flex-row rounded-2xl bg-slate-50 p-1">
-          {orderTabs.map((tab) => {
-            const isActive = tab === selectedTab;
-            const count = orders.filter((order) => order.status === tab).length;
-
-            return (
-              <View
-                key={tab}
-                onStartShouldSetResponder={() => true}
-                onResponderRelease={() => setSelectedTab(tab)}
-                className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
-                  isActive ? "bg-white shadow-sm" : ""
-                }`}
-              >
-                {tab === "Processing" ? (
-                  <PackageSearch
-                    color={isActive ? "#F97316" : "#64748B"}
-                    size={16}
-                  />
-                ) : (
-                  <PackageCheck
-                    color={isActive ? "#F97316" : "#64748B"}
-                    size={16}
-                  />
-                )}
-                <Text
-                  className={`text-xs ${isActive ? "text-slate-950" : "text-slate-500"}`}
-                  style={typography.labelBold}
-                >
-                  {tab} ({count})
-                </Text>
-              </View>
-            );
-          })}
-        </View>
+        <OrderTabs
+          onSelect={setSelectedTab}
+          processingCount={processingOrders.length}
+          selectedTab={selectedTab}
+          shippedCount={shippedOrders.length}
+        />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 132 }}
         >
-          {visibleOrders.length > 0 ? (
-            <View className="gap-4">
-              {visibleOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))}
-            </View>
-          ) : (
-            <View className="items-center justify-center rounded-3xl bg-slate-50 p-8">
-              <Text
-                className="text-center text-xl text-slate-950"
-                style={typography.title}
-              >
-                No {selectedTab.toLowerCase()} orders
-              </Text>
-              <Text
-                className="mt-2 text-center leading-6 text-slate-500"
-                style={typography.label}
-              >
-                Orders will appear here when they enter this stage.
-              </Text>
-            </View>
-          )}
+          <OrderList orders={visibleOrders} status={selectedTab} />
         </ScrollView>
 
         <BottomNav activeTab="orders" />

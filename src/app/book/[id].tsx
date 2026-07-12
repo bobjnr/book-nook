@@ -9,7 +9,6 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
   withTiming,
 } from "react-native-reanimated";
@@ -52,7 +51,6 @@ export default function BookDetailsScreen() {
   const isFlyingRef = useRef(false);
   const addBook = useCartStore((state) => state.addBook);
   const itemCount = useCartStore((state) => state.getItemCount());
-  const [toastQuantity, setToastQuantity] = useState(1);
   const flyingOpacity = useSharedValue(0);
   const flyingProgress = useSharedValue(0);
   const flyingLeft = useSharedValue(0);
@@ -65,8 +63,6 @@ export default function BookDetailsScreen() {
   const flyingEndY = useSharedValue(0);
   const cartBumpScale = useSharedValue(1);
   const badgeBumpScale = useSharedValue(1);
-  const toastOpacity = useSharedValue(0);
-  const toastTranslateY = useSharedValue(0);
 
   useEffect(() => {
     let isActive = true;
@@ -146,10 +142,6 @@ export default function BookDetailsScreen() {
     transform: [{ scale: badgeBumpScale.value }],
   }));
 
-  const toastStyle = useAnimatedStyle(() => ({
-    opacity: toastOpacity.value,
-    transform: [{ translateY: toastTranslateY.value }],
-  }));
 
   function handleCartLanding() {
     isFlyingRef.current = false;
@@ -225,15 +217,6 @@ export default function BookDetailsScreen() {
                       easing: Easing.in(Easing.quad),
                     }),
                   );
-                  toastOpacity.value = withSequence(
-                    withTiming(1, { duration: 120 }),
-                    withDelay(360, withTiming(0, { duration: 220 })),
-                  );
-                  toastTranslateY.value = 0;
-                  toastTranslateY.value = withTiming(-26, {
-                    duration: 700,
-                    easing: Easing.out(Easing.quad),
-                  });
                 }
               },
             ),
@@ -249,7 +232,6 @@ export default function BookDetailsScreen() {
     }
 
     isFlyingRef.current = true;
-    setToastQuantity(quantity);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
       () => undefined,
     );
@@ -298,19 +280,6 @@ export default function BookDetailsScreen() {
                       </Text>
                     </Animated.View>
                   ) : null}
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[
-                      { position: "absolute", top: -26, alignSelf: "center" },
-                      toastStyle,
-                    ]}
-                  >
-                    <View className="rounded-full bg-slate-950 px-2 py-0.5">
-                      <Text className="text-[10px] font-extrabold text-white">
-                        {`+${toastQuantity}`}
-                      </Text>
-                    </View>
-                  </Animated.View>
                 </Animated.View>
               </Pressable>
             </Link>

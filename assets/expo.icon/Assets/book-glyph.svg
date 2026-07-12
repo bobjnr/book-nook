@@ -1,0 +1,42 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Open book glyph, transparent background. Reused as-is for the iOS
+       Icon Composer layer, the Android adaptive-icon foreground, and the
+       splash screen mark. Sized to sit within the ~66% safe zone Android
+       adaptive icons require. -->
+  <g transform="translate(512,532) scale(1.35)">
+    <!-- left page -->
+    <path d="M -206 -118
+             C -150 -150 -70 -156 -14 -128
+             L -14 156
+             C -70 128 -150 134 -206 166
+             C -216 172 -224 166 -224 154
+             L -224 -84
+             C -224 -100 -216 -112 -206 -118 Z"
+          fill="#FFFFFF"/>
+    <!-- right page -->
+    <path d="M 206 -118
+             C 150 -150 70 -156 14 -128
+             L 14 156
+             C 70 128 150 134 206 166
+             C 216 172 224 166 224 154
+             L 224 -84
+             C 224 -100 216 -112 206 -118 Z"
+          fill="#FFFFFF"/>
+
+    <!-- center spine -->
+    <rect x="-6" y="-130" width="12" height="288" rx="6" fill="#F97316"/>
+
+    <!-- page lines, left -->
+    <g stroke="#F97316" stroke-width="12" stroke-linecap="round" opacity="0.8">
+      <path d="M -180 -76 C -136 -98 -92 -102 -56 -90" fill="none"/>
+      <path d="M -180 -30 C -136 -52 -92 -56 -56 -44" fill="none"/>
+      <path d="M -180 16  C -136 -6  -92 -10  -56 2"   fill="none"/>
+    </g>
+    <!-- page lines, right -->
+    <g stroke="#F97316" stroke-width="12" stroke-linecap="round" opacity="0.8">
+      <path d="M 180 -76 C 136 -98 92 -102 56 -90" fill="none"/>
+      <path d="M 180 -30 C 136 -52 92 -56 56 -44" fill="none"/>
+      <path d="M 180 16  C 136 -6  92 -10  56 2"   fill="none"/>
+    </g>
+  </g>
+</svg>

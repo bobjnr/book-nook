@@ -17,6 +17,8 @@ type StampSize = {
   lineWidth: number;
 };
 
+const MAX_STAMP_DOLLARS_LENGTH = 4;
+
 const stampSizes: Record<NonNullable<PriceProps['size']>, StampSize> = {
   sm: {
     outer: 48,
@@ -56,48 +58,63 @@ function getPriceParts(value: number) {
 export function Price({ value, originalValue, size = 'md' }: PriceProps) {
   const stamp = stampSizes[size];
   const price = getPriceParts(value);
+  const shouldUseStamp = price.dollars.length <= MAX_STAMP_DOLLARS_LENGTH;
 
   return (
     <View className="flex-row items-center gap-2">
-      <View
-        className="items-center justify-center rounded-full bg-orange-50"
-        style={[
-          styles.outerStamp,
-          {
-            width: stamp.outer,
-            height: stamp.outer,
-            borderRadius: stamp.outer / 2,
-          },
-        ]}
-      >
+      {shouldUseStamp ? (
         <View
-          className="items-center justify-center rounded-full"
+          className="items-center justify-center rounded-full bg-orange-50"
           style={[
-            styles.innerStamp,
+            styles.outerStamp,
             {
-              width: stamp.inner,
-              height: stamp.inner,
-              borderRadius: stamp.inner / 2,
+              width: stamp.outer,
+              height: stamp.outer,
+              borderRadius: stamp.outer / 2,
             },
           ]}
         >
+          <View
+            className="items-center justify-center rounded-full"
+            style={[
+              styles.innerStamp,
+              {
+                width: stamp.inner,
+                height: stamp.inner,
+                borderRadius: stamp.inner / 2,
+              },
+            ]}
+          >
+            <Text
+              accessibilityLabel={price.label}
+              testID="price-value"
+              className="text-center text-orange-800"
+              style={[typography.labelBold, { fontSize: stamp.mainText, lineHeight: stamp.mainText + 2 }]}
+            >
+              {price.dollars}
+            </Text>
+            <View className="my-0.5 bg-orange-800" style={{ height: 1, width: stamp.lineWidth }} />
+            <Text
+              className="text-center text-orange-800"
+              style={[typography.labelBold, { fontSize: stamp.centsText, lineHeight: stamp.centsText + 1 }]}
+            >
+              {price.cents}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View className="rounded-full bg-orange-50 px-2.5 py-1" style={styles.pricePill}>
           <Text
             accessibilityLabel={price.label}
             testID="price-value"
-            className="text-center text-orange-800"
-            style={[typography.labelBold, { fontSize: stamp.mainText, lineHeight: stamp.mainText + 2 }]}
+            className="text-center text-xs text-orange-800"
+            numberOfLines={1}
+            style={typography.labelBold}
           >
-            {price.dollars}
-          </Text>
-          <View className="my-0.5 bg-orange-800" style={{ height: 1, width: stamp.lineWidth }} />
-          <Text
-            className="text-center text-orange-800"
-            style={[typography.labelBold, { fontSize: stamp.centsText, lineHeight: stamp.centsText + 1 }]}
-          >
-            {price.cents}
+            {price.label}
           </Text>
         </View>
-      </View>
+      )}
       {originalValue ? (
         <Text className="text-xs text-slate-400 line-through" style={typography.label}>
           {formatCurrency(originalValue)}
@@ -113,6 +130,10 @@ const styles = StyleSheet.create({
     borderColor: '#9A3412',
   },
   innerStamp: {
+    borderWidth: 1,
+    borderColor: '#9A3412',
+  },
+  pricePill: {
     borderWidth: 1,
     borderColor: '#9A3412',
   },

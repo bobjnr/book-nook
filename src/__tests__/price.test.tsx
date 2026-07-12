@@ -14,4 +14,11 @@ describe('Price', () => {
 
     expect(screen.getByText('$14.99')).toBeTruthy();
   });
+
+  it('uses a wider exact price label for large prices', () => {
+    render(<Price value={1500} size="sm" />);
+
+    expect(screen.getByText('$1,500.00')).toBeTruthy();
+    expect(screen.getByTestId('price-value').props.accessibilityLabel).toBe('$1,500.00');
+  });
 });

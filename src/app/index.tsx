@@ -1,8 +1,9 @@
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Bell, CircleHelp, Search } from "lucide-react-native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,6 +13,14 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+} from "react-native-reanimated";
 
 import { BottomNav } from "@/components/BottomNav";
 import { BookCard } from "@/components/book/BookCard";
@@ -43,6 +52,27 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] =
     useState<(typeof categories)[number]>("All");
   const debouncedSearch = useDebouncedValue(search);
+  const listRef = useRef<FlashListRef<Book>>(null);
+  const logoPressScale = useSharedValue(1);
+  const logoPressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoPressScale.value }],
+  }));
+
+  function bounceLogo() {
+    // eslint-disable-next-line react-hooks/immutability -- Reanimated shared value, safe to mutate.
+    logoPressScale.value = withSequence(
+      withSpring(0.93, { damping: 12, stiffness: 320 }),
+      withSpring(1, { damping: 9, stiffness: 220 }),
+    );
+  }
+
+  function handleLogoPress() {
+    bounceLogo();
+    listRef.current?.scrollToTop({ animated: true });
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+      () => undefined,
+    );
+  }
 
   const booksQuery = useInfiniteQuery({
     queryKey: ["books", debouncedSearch, selectedCategory],
@@ -104,23 +134,42 @@ export default function HomeScreen() {
       <View className="flex-1">
         <View className="border-b border-slate-100 bg-white px-5 pb-4 pt-2">
           <View className="mb-6 flex-row items-start justify-between">
-            <View>
-              <View className="flex-row items-baseline">
-                <Text
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scroll to top"
+              onPress={handleLogoPress}
+              hitSlop={8}
+            >
+              <Animated.View
+                style={logoPressStyle}
+                className="flex-row items-baseline"
+              >
+                <Animated.Text
+                  entering={FadeInDown.duration(520)
+                    .delay(60)
+                    .springify()
+                    .damping(14)}
                   className="text-4xl text-slate-950"
                   style={typography.titleBlack}
                 >
                   Book{" "}
-                </Text>
-                <Text
+                </Animated.Text>
+                <Animated.Text
+                  entering={FadeInDown.duration(560)
+                    .delay(180)
+                    .springify()
+                    .damping(14)}
                   className="text-4xl text-orange-500"
                   style={typography.titleBlack}
                 >
                   Nook
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-3">
+                </Animated.Text>
+              </Animated.View>
+            </Pressable>
+            <Animated.View
+              entering={FadeIn.duration(420).delay(260)}
+              className="flex-row items-center gap-3"
+            >
               <Bell color="#0F172A" size={22} />
               <Pressable
                 accessibilityRole="button"
@@ -130,7 +179,7 @@ export default function HomeScreen() {
               >
                 <CircleHelp color="#0F172A" size={20} />
               </Pressable>
-            </View>
+            </Animated.View>
           </View>
 
           <View className="mb-7 h-14 flex-row items-center gap-3 rounded-2xl bg-slate-50 px-4">
@@ -178,6 +227,7 @@ export default function HomeScreen() {
         </View>
 
         <FlashList
+          ref={listRef}
           data={visibleBooks}
           style={{ flex: 1 }}
           numColumns={2}
