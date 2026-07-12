@@ -1,10 +1,9 @@
-/* eslint-disable react-hooks/immutability */
-import { Image } from 'expo-image';
-import { Link, router, useLocalSearchParams } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { ArrowLeft, ShoppingBag } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image } from "expo-image";
+import { Link, router, useLocalSearchParams } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { ArrowLeft, ShoppingBag } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -12,41 +11,40 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
-import { BookCover } from '@/components/book/BookCover';
-import { Rating } from '@/components/book/Rating';
-import { Price } from '@/components/Price';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { QuantityStepper } from '@/components/QuantityStepper';
-import { Screen } from '@/components/Screen';
-import { BookDetailsSkeleton } from '@/components/Skeleton';
-import { typography } from '@/constants/typography';
-import { fetchBookById } from '@/services/books';
-import { useCartStore } from '@/store/cart-store';
-import type { Book } from '@/types/book';
+import { BookCover } from "@/components/book/BookCover";
+import { Rating } from "@/components/book/Rating";
+import { Price } from "@/components/Price";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { QuantityStepper } from "@/components/QuantityStepper";
+import { Screen } from "@/components/Screen";
+import { BookDetailsSkeleton } from "@/components/Skeleton";
+import { typography } from "@/constants/typography";
+import { fetchBookById } from "@/services/books";
+import { useCartStore } from "@/store/cart-store";
+import type { Book } from "@/types/book";
 
-type LoadStatus = 'loading' | 'success' | 'error';
+type LoadStatus = "loading" | "success" | "error";
 
 const reviewHighlights = [
   {
-    quote: 'Beautifully paced and easy to get lost in.',
-    reviewer: 'T. Okoye',
+    quote: "Beautifully paced and easy to get lost in.",
+    reviewer: "T. Okoye",
   },
   {
-    quote: 'A thoughtful read that stayed with me after the final page.',
-    reviewer: 'R. Daniel',
+    quote: "A thoughtful read that stayed with me after the final page.",
+    reviewer: "R. Daniel",
   },
 ];
 
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [book, setBook] = useState<Book | null>(null);
-  const [status, setStatus] = useState<LoadStatus>('loading');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const rootRef = useRef<View>(null);
   const coverRef = useRef<View>(null);
@@ -78,24 +76,24 @@ export default function BookDetailsScreen() {
         return;
       }
 
-      setStatus('loading');
-      setError('');
+      setStatus("loading");
+      setError("");
 
       try {
         const selectedBook = await fetchBookById(id);
 
         if (isActive) {
           setBook(selectedBook);
-          setStatus('success');
+          setStatus("success");
         }
       } catch (requestError) {
         if (isActive) {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : 'We could not load this book right now.',
+              : "We could not load this book right now.",
           );
-          setStatus('error');
+          setStatus("error");
         }
       }
     }
@@ -111,12 +109,18 @@ export default function BookDetailsScreen() {
     const progress = flyingProgress.value;
     const inverse = 1 - progress;
     const translateX =
-      2 * inverse * progress * flyingControlX.value + progress * progress * flyingEndX.value;
+      2 * inverse * progress * flyingControlX.value +
+      progress * progress * flyingEndX.value;
     const translateY =
-      2 * inverse * progress * flyingControlY.value + progress * progress * flyingEndY.value;
+      2 * inverse * progress * flyingControlY.value +
+      progress * progress * flyingEndY.value;
     // Shrinks quickly on lift-off, then settles into a small parcel for the rest
     // of the arc, with a gentle flutter of rotation instead of a single twist.
-    const scale = interpolate(progress, [0, 0.2, 0.62, 1], [1, 0.62, 0.32, 0.15]);
+    const scale = interpolate(
+      progress,
+      [0, 0.2, 0.62, 1],
+      [1, 0.62, 0.32, 0.15],
+    );
     const rotate = interpolate(progress, [0, 0.3, 0.62, 1], [0, -8, 5, 12]);
 
     return {
@@ -147,10 +151,7 @@ export default function BookDetailsScreen() {
     transform: [{ translateY: toastTranslateY.value }],
   }));
 
-  function handleCartLanding(bookToAdd: Book, quantityToAdd: number) {
-    for (let index = 0; index < quantityToAdd; index += 1) {
-      addBook(bookToAdd);
-    }
+  function handleCartLanding() {
     isFlyingRef.current = false;
   }
 
@@ -191,30 +192,51 @@ export default function BookDetailsScreen() {
           // launch away from the cover, then a shorter, decelerating
           // approach into the cart, similar to how a thrown object behaves.
           flyingProgress.value = withSequence(
-            withTiming(0.62, { duration: 430, easing: Easing.out(Easing.cubic) }),
-            withTiming(1, { duration: 300, easing: Easing.in(Easing.quad) }, (finished) => {
-              if (finished) {
-                scheduleOnRN(onLanded);
-                flyingOpacity.value = withTiming(0, { duration: 160 });
-                cartBumpScale.value = withSequence(
-                  withSpring(1.32, { damping: 5, stiffness: 260 }),
-                  withSpring(1, { damping: 8, stiffness: 220 }),
-                );
-                badgeBumpScale.value = withSequence(
-                  withSpring(1.5, { damping: 5, stiffness: 260 }),
-                  withSpring(1, { damping: 7, stiffness: 200 }),
-                );
-                toastOpacity.value = withSequence(
-                  withTiming(1, { duration: 120 }),
-                  withDelay(360, withTiming(0, { duration: 220 })),
-                );
-                toastTranslateY.value = 0;
-                toastTranslateY.value = withTiming(-26, {
-                  duration: 700,
-                  easing: Easing.out(Easing.quad),
-                });
-              }
+            withTiming(0.62, {
+              duration: 430,
+              easing: Easing.out(Easing.cubic),
             }),
+            withTiming(
+              1,
+              { duration: 300, easing: Easing.in(Easing.quad) },
+              (finished) => {
+                if (finished) {
+                  scheduleOnRN(onLanded);
+                  flyingOpacity.value = withTiming(0, { duration: 160 });
+                  cartBumpScale.value = 1;
+                  cartBumpScale.value = withSequence(
+                    withTiming(1.2, {
+                      duration: 90,
+                      easing: Easing.out(Easing.quad),
+                    }),
+                    withTiming(1, {
+                      duration: 80,
+                      easing: Easing.in(Easing.quad),
+                    }),
+                  );
+                  badgeBumpScale.value = 1;
+                  badgeBumpScale.value = withSequence(
+                    withTiming(1.32, {
+                      duration: 90,
+                      easing: Easing.out(Easing.quad),
+                    }),
+                    withTiming(1, {
+                      duration: 80,
+                      easing: Easing.in(Easing.quad),
+                    }),
+                  );
+                  toastOpacity.value = withSequence(
+                    withTiming(1, { duration: 120 }),
+                    withDelay(360, withTiming(0, { duration: 220 })),
+                  );
+                  toastTranslateY.value = 0;
+                  toastTranslateY.value = withTiming(-26, {
+                    duration: 700,
+                    easing: Easing.out(Easing.quad),
+                  });
+                }
+              },
+            ),
           );
         });
       });
@@ -228,14 +250,19 @@ export default function BookDetailsScreen() {
 
     isFlyingRef.current = true;
     setToastQuantity(quantity);
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+      () => undefined,
+    );
 
-    const bookToAdd = book;
-    const quantityToAdd = quantity;
+    for (let index = 0; index < quantity; index += 1) {
+      addBook(book);
+    }
 
     startFlyingCoverAnimation(() => {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-      handleCartLanding(bookToAdd, quantityToAdd);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+        () => undefined,
+      );
+      handleCartLanding();
     });
   }
 
@@ -266,12 +293,17 @@ export default function BookDetailsScreen() {
                       style={badgeStyle}
                       className="absolute -right-1 -top-1 min-w-5 items-center rounded-full bg-orange-500 px-1"
                     >
-                      <Text className="text-[10px] font-extrabold text-white">{itemCount}</Text>
+                      <Text className="text-[10px] font-extrabold text-white">
+                        {itemCount}
+                      </Text>
                     </Animated.View>
                   ) : null}
                   <Animated.View
                     pointerEvents="none"
-                    style={[{ position: 'absolute', top: -26, alignSelf: 'center' }, toastStyle]}
+                    style={[
+                      { position: "absolute", top: -26, alignSelf: "center" },
+                      toastStyle,
+                    ]}
                   >
                     <View className="rounded-full bg-slate-950 px-2 py-0.5">
                       <Text className="text-[10px] font-extrabold text-white">
@@ -285,52 +317,90 @@ export default function BookDetailsScreen() {
           </View>
         </View>
 
-        {status === 'loading' ? <BookDetailsSkeleton /> : null}
+        {status === "loading" ? <BookDetailsSkeleton /> : null}
 
-        {status === 'error' ? (
+        {status === "error" ? (
           <View className="flex-1 items-center justify-center gap-4">
-            <Text className="text-center text-lg font-extrabold text-slate-950">Something went wrong</Text>
-            <Text className="text-center font-semibold text-slate-500">{error}</Text>
-            <PrimaryButton onPress={() => router.replace(`/book/${id}`)}>Try Again</PrimaryButton>
+            <Text className="text-center text-lg font-extrabold text-slate-950">
+              Something went wrong
+            </Text>
+            <Text className="text-center font-semibold text-slate-500">
+              {error}
+            </Text>
+            <PrimaryButton onPress={() => router.replace(`/book/${id}`)}>
+              Try Again
+            </PrimaryButton>
           </View>
         ) : null}
 
-        {status === 'success' && book ? (
+        {status === "success" && book ? (
           <View className="flex-1">
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 116 }}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 116 }}
+            >
               <View className="items-center pt-3">
                 <View ref={coverRef} collapsable={false}>
-                  <BookCover uri={book.cover} width={204} height={318} rounded={20} />
+                  <BookCover
+                    uri={book.cover}
+                    width={204}
+                    height={318}
+                    rounded={20}
+                  />
                 </View>
               </View>
 
               <View className="mt-7 gap-4">
                 <View>
-                  <Text className="text-3xl font-black text-slate-950">{book.title}</Text>
-                  <Text className="mt-1 text-base font-semibold text-slate-500">{book.author}</Text>
+                  <Text className="text-3xl font-black text-slate-950">
+                    {book.title}
+                  </Text>
+                  <Text className="mt-1 text-base font-semibold text-slate-500">
+                    {book.author}
+                  </Text>
                 </View>
 
                 <Rating rating={book.rating} reviews={book.reviews} />
 
                 <View className="flex-row items-center gap-3">
-                  <Price value={book.price} originalValue={book.price + 4} size="lg" />
+                  <Price
+                    value={book.price}
+                    originalValue={book.price + 4}
+                    size="lg"
+                  />
                   <View className="rounded-lg bg-green-100 px-3 py-1">
-                    <Text className="text-xs font-extrabold text-green-700">27% OFF</Text>
+                    <Text className="text-xs font-extrabold text-green-700">
+                      27% OFF
+                    </Text>
                   </View>
                 </View>
 
-                <Text className="text-base font-medium leading-7 text-slate-600">{book.description}</Text>
+                <Text className="text-base font-medium leading-7 text-slate-600">
+                  {book.description}
+                </Text>
 
                 <View className="gap-3">
-                  <Text className="text-xs uppercase text-orange-700" style={typography.labelBold}>
+                  <Text
+                    className="text-xs uppercase text-orange-700"
+                    style={typography.labelBold}
+                  >
                     Reviews
                   </Text>
                   {reviewHighlights.map((review) => (
-                    <View key={review.reviewer} className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
-                      <Text className="text-sm italic leading-6 text-slate-800" style={typography.label}>
+                    <View
+                      key={review.reviewer}
+                      className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4"
+                    >
+                      <Text
+                        className="text-sm italic leading-6 text-slate-800"
+                        style={typography.label}
+                      >
                         {`"${review.quote}"`}
                       </Text>
-                      <Text className="mt-2 text-xs text-slate-500" style={typography.labelBold}>
+                      <Text
+                        className="mt-2 text-xs text-slate-500"
+                        style={typography.labelBold}
+                      >
                         - {review.reviewer}
                       </Text>
                     </View>
@@ -339,16 +409,28 @@ export default function BookDetailsScreen() {
 
                 <View className="flex-row justify-between rounded-3xl bg-slate-50 px-5 py-4">
                   <View className="items-center">
-                    <Text className="text-sm font-extrabold text-slate-950">Paperback</Text>
-                    <Text className="text-xs font-semibold text-slate-500">Format</Text>
+                    <Text className="text-sm font-extrabold text-slate-950">
+                      Paperback
+                    </Text>
+                    <Text className="text-xs font-semibold text-slate-500">
+                      Format
+                    </Text>
                   </View>
                   <View className="items-center">
-                    <Text className="text-sm font-extrabold text-slate-950">208</Text>
-                    <Text className="text-xs font-semibold text-slate-500">Pages</Text>
+                    <Text className="text-sm font-extrabold text-slate-950">
+                      208
+                    </Text>
+                    <Text className="text-xs font-semibold text-slate-500">
+                      Pages
+                    </Text>
                   </View>
                   <View className="items-center">
-                    <Text className="text-sm font-extrabold text-slate-950">English</Text>
-                    <Text className="text-xs font-semibold text-slate-500">Language</Text>
+                    <Text className="text-sm font-extrabold text-slate-950">
+                      English
+                    </Text>
+                    <Text className="text-xs font-semibold text-slate-500">
+                      Language
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -358,9 +440,9 @@ export default function BookDetailsScreen() {
               pointerEvents="none"
               style={[
                 {
-                  position: 'absolute',
+                  position: "absolute",
                   zIndex: 20,
-                  shadowColor: '#0F172A',
+                  shadowColor: "#0F172A",
                   shadowOffset: { width: 0, height: 10 },
                   shadowOpacity: 0.28,
                   shadowRadius: 16,
@@ -369,8 +451,19 @@ export default function BookDetailsScreen() {
                 flyingStyle,
               ]}
             >
-              <View style={{ width: '100%', height: '100%', borderRadius: 20, overflow: 'hidden' }}>
-                <Image source={{ uri: book.cover }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              <View
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 20,
+                  overflow: "hidden",
+                }}
+              >
+                <Image
+                  source={{ uri: book.cover }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                />
               </View>
             </Animated.View>
 
@@ -378,10 +471,15 @@ export default function BookDetailsScreen() {
               <QuantityStepper
                 quantity={quantity}
                 onIncrease={() => setQuantity((value) => value + 1)}
-                onDecrease={() => setQuantity((value) => Math.max(1, value - 1))}
+                onDecrease={() =>
+                  setQuantity((value) => Math.max(1, value - 1))
+                }
               />
               <View className="flex-1">
-                <PrimaryButton testID="add-to-cart-button" onPress={handleAddToCart}>
+                <PrimaryButton
+                  testID="add-to-cart-button"
+                  onPress={handleAddToCart}
+                >
                   ADD TO CART
                 </PrimaryButton>
               </View>

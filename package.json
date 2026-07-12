@@ -59,7 +59,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "dev:device": "expo start --dev-client --host lan --port 8081 --clear"
   },
   "private": true,
   "jest": {
